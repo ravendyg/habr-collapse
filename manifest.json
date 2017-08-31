@@ -1,0 +1,11 @@
+{
+  "manifest_version": 2,
+
+  "name": "Habra collapse",
+  "description": "Collapse / expand comment branches",
+  "version": "1.0",
+  "content_scripts": [ {
+    "js": [ "ct.js" ],
+    "matches": [ "http://*/*", "https://*/*"]
+  }]
+}

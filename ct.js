@@ -3,18 +3,23 @@
 const
   collapseBaseClass = 'collapse-control',
   showRootBaseClass = 'show-root-control',
+  showPreviousBaseClass = 'previous-control',
   collapseRegexp = new RegExp(collapseBaseClass),
+  showPreviousRegexp = new RegExp(showPreviousBaseClass),
   showRootRegexp = new RegExp(showRootBaseClass),
   collapsedRegexp = /collapsed/,
   toggleCollapsedDefaultClass = `${collapseBaseClass} inline-list__item inline-list__item_comment-nav js-comment_children`,
   showRootClass = `${showRootBaseClass} inline-list__item inline-list__item_comment-nav js-comment_children`,
+  showPreviousClass = `${showPreviousBaseClass} inline-list__item inline-list__item_comment-nav js-comment_children`,
   commentSectionClass = 'comments-section',
   collapseLiColor = 'red',
   expandLiColor = 'green',
   collapseLiText = 'Collapse',
   expandLiText = 'Expand',
+  showPreviousText = 'Previous',
   showRootText = 'Root',
-  showRoorColor = 'blue'
+  showRootColor = 'darkblue',
+  showPreviousColor = 'darkblue'
   ;
 
 if (['habrahabr.ru', 'geektimes.ru'].indexOf(location.host) !==  -1) {
@@ -36,6 +41,8 @@ function clickHandler(ev) {
     toggleCollapsed(elem, klass);
   } else if (showRootRegexp.test(klass)) {
     showRoot(elem);
+  } else if (showPreviousRegexp.test(klass)) {
+    showPrevious(elem);
   }
 
 }
@@ -84,6 +91,19 @@ function showRoot(elem) {
 }
 
 /**
+ * @param {HTMLElement} elem
+ */
+function showPrevious(elem) {
+  try {
+    const wrapper = elem.parentElement.parentElement.parentElement.parentElement;
+    const target = wrapper.previousElementSibling;
+    target && target.scrollIntoView(true);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+/**
  * somewhat cpu intensive
  */
 function addButtons() {
@@ -105,9 +125,17 @@ function addButtons() {
     showRootBtn.textContent = showRootText;
     showRootBtn.style.cursor = 'pointer';
     showRootBtn.style.marginTop = '5px';
-    showRootBtn.style.color = showRoorColor;
+    showRootBtn.style.color = showRootColor;
+
+    const showPreviousBtn = document.createElement('li');
+    showPreviousBtn.setAttribute('class', showPreviousClass);
+    showPreviousBtn.textContent = showPreviousText;
+    showPreviousBtn.style.cursor = 'pointer';
+    showPreviousBtn.style.marginTop = '5px';
+    showPreviousBtn.style.color = showPreviousColor;
 
     holder.appendChild(toggleCollapsedBtn);
+    holder.appendChild(showPreviousBtn);
     holder.appendChild(showRootBtn);
   }
 

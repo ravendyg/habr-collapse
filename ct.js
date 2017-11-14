@@ -1,25 +1,36 @@
 'use strict';
 
 const
-  collapseBaseClass = 'collapse-control',
-  showRootBaseClass = 'show-root-control',
-  showPreviousBaseClass = 'previous-control',
-  collapseRegexp = new RegExp(collapseBaseClass),
-  showPreviousRegexp = new RegExp(showPreviousBaseClass),
-  showRootRegexp = new RegExp(showRootBaseClass),
-  collapsedRegexp = /collapsed/,
-  toggleCollapsedDefaultClass = `${collapseBaseClass} inline-list__item inline-list__item_comment-nav js-comment_children`,
-  showRootClass = `${showRootBaseClass} inline-list__item inline-list__item_comment-nav js-comment_children`,
-  showPreviousClass = `${showPreviousBaseClass} inline-list__item inline-list__item_comment-nav js-comment_children`,
-  commentSectionClass = 'comments-section',
-  collapseLiColor = 'red',
-  expandLiColor = 'green',
-  collapseLiText = 'Collapse',
-  expandLiText = 'Expand',
-  showPreviousText = 'Previous',
-  showRootText = 'Root',
-  showRootColor = 'darkblue',
-  showPreviousColor = 'darkblue'
+  btnTypes = ['collapse', 'root', 'previous'],
+  baseClasses = {
+    collapse: 'collapse-control',
+    root: 'show-root-control',
+    previous: 'previous-control',
+  },
+  classes = {
+    collapse: `${baseClasses.collapse} inline-list__item inline-list__item_comment-nav js-comment_children`,
+    root: `${baseClasses.root} inline-list__item inline-list__item_comment-nav js-comment_children`,
+    previous: `${baseClasses.previous} inline-list__item inline-list__item_comment-nav js-comment_children`,
+    comment: 'comments-section',
+  },
+  regexps = {
+    collapse: new RegExp(baseClasses.collapse),
+    root: new RegExp(baseClasses.root),
+    previous: new RegExp(baseClasses.previous),
+    collapsed: /collapsed/,
+  },
+  colors = {
+    collapse: 'red',
+    expand: 'green',
+    root: 'darkblue',
+    previous: 'blue'
+  },
+  texts = {
+    collapse: 'Collapse',
+    expand: 'Expand',
+    previous: 'Previous',
+    root: 'Root'
+  }
   ;
 
 if (['habrahabr.ru', 'geektimes.ru'].indexOf(location.host) !==  -1) {
@@ -37,11 +48,11 @@ function clickHandler(ev) {
 
   const klass = elem.getAttribute('class') || '';
 
-  if (collapseRegexp.test(klass)) {
+  if (regexps.collapse.test(klass)) {
     toggleCollapsed(elem, klass);
-  } else if (showRootRegexp.test(klass)) {
+  } else if (regexps.root.test(klass)) {
     showRoot(elem);
-  } else if (showPreviousRegexp.test(klass)) {
+  } else if (regexps.previous.test(klass)) {
     showPrevious(elem);
   }
 
@@ -56,16 +67,16 @@ function toggleCollapsed(elem, klass) {
   const list = root.nextElementSibling;
   let newClass, display, text, color;
 
-  if (!collapsedRegexp.test(klass)) {
-    newClass = toggleCollapsedDefaultClass + 'collapsed';
+  if (!regexps.collapsed.test(klass)) {
+    newClass = classes.collapse + 'collapsed';
     display = 'none';
-    text = expandLiText;
-    color = expandLiColor;
+    text = texts.expand;
+    color = colors.expand;
   } else {
-    newClass = toggleCollapsedDefaultClass;
+    newClass = classes.collapse;
     display = '';
-    text = collapseLiText;
-    color = collapseLiColor;
+    text = texts.collapse;
+    color = colors.collapse;
   }
 
   elem.setAttribute('class', newClass);
@@ -83,7 +94,7 @@ function showRoot(elem) {
     elem = elem.parentElement || null;
     if (elem && elem.tagName === 'LI') {
       target = elem;
-    } else if (elem && elem.getAttribute('class') === commentSectionClass) {
+    } else if (elem && elem.getAttribute('class') === classes.comment) {
       elem = null;
     }
   }
@@ -104,39 +115,33 @@ function showPrevious(elem) {
 }
 
 /**
+ * @param {string} type
+ */
+function createBtn(type) {
+  const btn = document.createElement('li');
+  btn.setAttribute('class', classes[type]);
+  btn.textContent = texts[type];
+  btn.style.cursor = 'pointer';
+  btn.style.marginTop = '5px';
+  btn.style.color = colors[type];
+
+  return btn;
+}
+
+/**
  * somewhat cpu intensive
  */
 function addButtons() {
 
-  const commentControlsHolders = document.querySelectorAll('.inline-list.inline-list_comment-nav') || [];
+  const commentControlsHolders = [...document.querySelectorAll('.inline-list.inline-list_comment-nav')];
 
   for (let i = 0; i < commentControlsHolders.length; i++) {
     const holder = commentControlsHolders[i];
 
-    const toggleCollapsedBtn = document.createElement('li');
-    toggleCollapsedBtn.setAttribute('class', toggleCollapsedDefaultClass);
-    toggleCollapsedBtn.textContent = collapseLiText;
-    toggleCollapsedBtn.style.cursor = 'pointer';
-    toggleCollapsedBtn.style.marginTop = '5px';
-    toggleCollapsedBtn.style.color = collapseLiColor;
-
-    const showRootBtn = document.createElement('li');
-    showRootBtn.setAttribute('class', showRootClass);
-    showRootBtn.textContent = showRootText;
-    showRootBtn.style.cursor = 'pointer';
-    showRootBtn.style.marginTop = '5px';
-    showRootBtn.style.color = showRootColor;
-
-    const showPreviousBtn = document.createElement('li');
-    showPreviousBtn.setAttribute('class', showPreviousClass);
-    showPreviousBtn.textContent = showPreviousText;
-    showPreviousBtn.style.cursor = 'pointer';
-    showPreviousBtn.style.marginTop = '5px';
-    showPreviousBtn.style.color = showPreviousColor;
-
-    holder.appendChild(toggleCollapsedBtn);
-    holder.appendChild(showPreviousBtn);
-    holder.appendChild(showRootBtn);
+    for (let type of btnTypes) {
+      const btn = createBtn(type);
+      holder.appendChild(btn);
+    }
   }
 
 }

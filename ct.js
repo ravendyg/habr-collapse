@@ -33,7 +33,7 @@ const
   }
   ;
 
-if (['habrahabr.ru', 'geektimes.ru'].indexOf(location.host) !==  -1) {
+if (['habrahabr.ru', 'geektimes.ru', 'habr.com', 'geektimes.com'].indexOf(location.host) !==  -1) {
   addButtons();
   document.addEventListener('click', clickHandler);
 }

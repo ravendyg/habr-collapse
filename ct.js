@@ -25,6 +25,8 @@ const
     contentList: 'content-list',
     comment: 'comment',
     commentLi: 'content-list__item',
+    votingSpan: 'voting-wjt__counter',
+    postHeader: 'post__meta',
   },
   colors = {
     collapse: 'red',
@@ -202,6 +204,8 @@ function init() {
     };
     commentWrapper.addEventListener('pointerleave', handleLeave);
   }, true);
+
+  moveRating();
 }
 
 function getWrapping(el, klass) {
@@ -229,4 +233,13 @@ function getRootComment(el, root) {
     }
   }
   return getRootComment(el.parentElement, root);
+}
+
+// Adds rating to the article header - no need to scroll to the bottom to understand whether it's worth it to read the article.
+function moveRating() {
+  try {
+    const rating = document.querySelector('.' + classes.votingSpan).cloneNode(true);
+    const header = document.querySelector('.' + classes.postHeader);
+    header.appendChild(rating);
+  } catch {}
 }

@@ -16,14 +16,13 @@ const
   },
   classes = {
     btn: 'ext-btn',
-    tmpBtn: 'ext-btn-tmp',
-    collapse: `${baseClasses.collapse} inline-list__item inline-list__item_comment-nav js-comment_children`,
-    expand: `${baseClasses.expand} inline-list__item inline-list__item_comment-nav js-comment_children`,
-    root: `${baseClasses.root} inline-list__item inline-list__item_comment-nav js-comment_children`,
-    previous: `${baseClasses.previous} inline-list__item inline-list__item_comment-nav js-comment_children`,
+    collapse: `${baseClasses.collapse} tm-comment-thread__button`,
+    expand: `${baseClasses.expand} tm-comment-thread__button`,
+    root: `${baseClasses.root} tm-comment-thread__button`,
+    previous: `${baseClasses.previous} tm-comment-thread__button`,
     collapsedComment: 'ext-collapsed',
     contentList: 'content-list',
-    comment: 'comment',
+    comment: 'tm-comment-thread__comment',
     commentLi: 'content-list__item',
     votingSpan: 'voting-wjt__counter',
     postHeader: 'post__meta',
@@ -69,8 +68,16 @@ function collapse(el) {
   if (!root) {
     return;
   }
-  root.setAttribute(commentData, classes.collapsedComment);
+  const thread = root.nextElementSibling;
+  if (!thread) {
+    return;
+  }
+  thread.setAttribute(commentData, classes.collapsedComment);
   addBtn(root, btnTypes.expand);
+  const collapseBtn = root.querySelector('.' + baseClasses.collapse);
+  if (collapseBtn) {
+    collapseBtn.remove();
+  }
 }
 
 function expand(el) {
@@ -78,7 +85,12 @@ function expand(el) {
   if (!root) {
     return;
   }
-  root.setAttribute(commentData, '');
+  const thread = root.nextElementSibling;
+  if (!thread) {
+    return;
+  }
+  thread.setAttribute(commentData, '');
+  addBtn(root, btnTypes.collapse);
   const expandBtn = root.querySelector('.' + baseClasses.expand);
   if (expandBtn) {
     expandBtn.remove();
@@ -87,7 +99,7 @@ function expand(el) {
 
 function showPrevious(elem) {
   try {
-    const wrapper = getWrapping(elem, classes.commentLi);
+    const wrapper = getWrapping(getWrapping(elem, 'tm-comment-thread__children'), 'tm-comment-thread__children');
     scrollToWithHeader(wrapper.previousElementSibling);
   } catch {}
 }
@@ -108,14 +120,15 @@ function scrollToWithHeader(el) {
   } catch { }
 }
 
-/**
- * @param {HTMLDivElement} content
- */
-function addTmpBtns(content) {
+function addBtns(content) {
   const _types = [];
 
-  if (!content.classList.contains(classes.collapsedComment)) {
-    _types.push(btnTypes.collapse);
+  if (content.children[1]) {
+    if (!content.children[1].dataset.extClass) {
+      _types.push(btnTypes.collapse);
+    } else {
+      _types.push(btnTypes.expand);
+    }
   }
   _types.push(btnTypes.previous);
   _types.push(btnTypes.root);
@@ -126,20 +139,29 @@ function addTmpBtns(content) {
 }
 
 /**
+ * @param {HTMLDivElement} content
+ */
+function removeBtns(content) {
+  if (!content) return;
+  const btns = content.querySelectorAll('.' + classes.btn) || [];
+  btns.forEach(btn => btn.remove());
+}
+
+/**
  *
  * @param {HTMLDivElement} content
  * @param {string} type
  */
 function addBtn(content, type) {
-  const btnHolder = content.querySelector('.inline-list.inline-list_comment-nav');
+  const btnHolder = content.querySelector('.tm-comment-footer');
   const btn = createBtn(type);
-  if (type !== btnTypes.expand) {
-    btn.classList.add(classes.tmpBtn);
+  if (type !== btnTypes.expand && type !== btnTypes.collapse) {
+    btn.classList.add(classes.btn);
     btnHolder.appendChild(btn);
   } else {
-    const tmpBtns = btnHolder.querySelectorAll('.' + classes.tmpBtn) || [];
-    if (tmpBtns[0]) {
-      btnHolder.insertBefore(btn, tmpBtns[0]);
+    const btns = btnHolder.querySelectorAll('.' + classes.btn) || [];
+    if (btns[0]) {
+      btnHolder.insertBefore(btn, btns[0]);
     } else {
       btnHolder.appendChild(btn);
     }
@@ -150,7 +172,7 @@ function addBtn(content, type) {
  * @param {string} type
  */
 function createBtn(type) {
-  const btn = document.createElement('li');
+  const btn = document.createElement('button');
 
   btn.setAttribute('class', classes[type]);
   btn.classList.add(classes.btn);
@@ -174,38 +196,33 @@ function init() {
   [${commentData}="${classes.collapsedComment}"] .${baseClasses.expand} {
     display: list-item;
   }
-  [${commentData}="${classes.collapsedComment}"] .${baseClasses.collapse} {
-    display: none;
-  }
-  [${commentData}="${classes.collapsedComment}"] + ul {
+  [${commentData}="${classes.collapsedComment}"] {
     display: none;
   }
   `;
-  document.querySelector('.layout').appendChild(st);
+  document.querySelector('body').appendChild(st);
 
 
   let currentComment;
   window.addEventListener('pointerover', (ee) => {
     const el = ee.target;
-    const commentWrapper = getWrapping(el, classes.comment);
+    const commentWrapper = getWrapping(el, 'tm-comment-thread');
     if (!commentWrapper || commentWrapper === currentComment) {
       return;
     }
 
+    removeBtns(currentComment);
     currentComment = commentWrapper;
 
-    addTmpBtns(commentWrapper);
+    addBtns(commentWrapper);
 
     const handleLeave = () => {
       commentWrapper.removeEventListener('pointerleave', handleLeave);
-      const btns = commentWrapper.querySelectorAll('.' + classes.tmpBtn) || [];
-      btns.forEach(btn => btn.remove());
+      removeBtns(commentWrapper);
       currentComment = null;
     };
     commentWrapper.addEventListener('pointerleave', handleLeave);
   }, true);
-
-  moveRating();
 }
 
 function getWrapping(el, klass) {
@@ -222,24 +239,15 @@ function getRootComment(el, root) {
   if (!el || !el.classList) {
     return root;
   }
-  if (el.classList.contains(classes.comment)) {
+  if (el.classList.contains('tm-comment-thread')) {
     // Comment which header was clicked.
     return getRootComment(el.parentElement, el);
   }
   if (el.classList.contains(classes.contentList)) {
     const sib = el.previousElementSibling;
-    if (sib.classList.contains(classes.comment)) {
+    if (sib.classList.contains('tm-comment-thread')) {
       return getRootComment(el.parentElement, sib);
     }
   }
   return getRootComment(el.parentElement, root);
-}
-
-// Adds rating to the article header - no need to scroll to the bottom to understand whether it's worth it to read the article.
-function moveRating() {
-  try {
-    const rating = document.querySelector('.' + classes.votingSpan).cloneNode(true);
-    const header = document.querySelector('.' + classes.postHeader);
-    header.appendChild(rating);
-  } catch {}
 }
